@@ -15,11 +15,11 @@
  */
 package com.alibaba.csp.sentinel.dashboard.repository.rule;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGenerator;
+import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGeneratorFactory;
+import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGeneratorType;
 import com.alibaba.csp.sentinel.slots.block.flow.ClusterFlowConfig;
-
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,11 +30,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class InMemFlowRuleStore extends InMemoryRuleRepositoryAdapter<FlowRuleEntity> {
 
-    private static AtomicLong ids = new AtomicLong(0);
+    private static final IdGenerator ID_GENERATOR = IdGeneratorFactory.create(IdGeneratorType.SNOWFLAKE);
 
     @Override
     protected long nextId() {
-        return ids.incrementAndGet();
+        return ID_GENERATOR.nextId();
     }
 
     @Override
