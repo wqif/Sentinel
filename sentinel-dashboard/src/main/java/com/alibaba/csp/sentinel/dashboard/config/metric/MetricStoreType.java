@@ -7,7 +7,10 @@ package com.alibaba.csp.sentinel.dashboard.config.metric;
 public enum MetricStoreType {
 
     DEFAULT(DefaultMetricConfiguration.class),
-    ES(ElasticsearchMetricConfiguration.class);
+    ES(ElasticsearchMetricConfiguration.class),
+    REDIS(RedisMetricConfiguration.class),
+
+    ;
 
     private final Class<?> configurationClass;
 
