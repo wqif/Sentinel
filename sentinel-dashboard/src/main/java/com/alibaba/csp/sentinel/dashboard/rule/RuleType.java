@@ -18,12 +18,7 @@ package com.alibaba.csp.sentinel.dashboard.rule;
 
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.ApiDefinitionEntity;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.GatewayFlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.AuthorityRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.DegradeRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.ParamFlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.RuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.SystemRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.*;
 import com.alibaba.csp.sentinel.slots.block.AbstractRule;
 import org.apache.commons.lang.StringUtils;
 
@@ -47,7 +42,7 @@ public enum RuleType {
     /**
      * 热点规则
      */
-    PARAM_FLOW("param-flow-rules", ParamFlowRuleEntity.class),
+    PARAM_FLOW("param-flow-rules", CustomParamFlowRuleEntity.class),
     /**
      * 系统规则
      */
@@ -55,7 +50,7 @@ public enum RuleType {
     /**
      * 授权规则
      */
-    AUTHORITY("authority-rules", AuthorityRuleEntity.class),
+    AUTHORITY("authority-rules", CustomAuthorityRuleEntity.class),
     /**
      * 网关流控规则
      */

@@ -15,7 +15,7 @@
  */
 package com.alibaba.csp.sentinel.dashboard.repository.rule;
 
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.ParamFlowRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.CustomParamFlowRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGenerator;
 import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGeneratorFactory;
 import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGeneratorType;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
  * @since 0.2.1
  */
 @Component
-public class InMemParamFlowRuleStore extends InMemoryRuleRepositoryAdapter<ParamFlowRuleEntity> {
+public class InMemParamFlowRuleStore extends InMemoryRuleRepositoryAdapter<CustomParamFlowRuleEntity> {
 
     private static final IdGenerator ID_GENERATOR = IdGeneratorFactory.create(IdGeneratorType.SNOWFLAKE);
 
@@ -37,7 +37,7 @@ public class InMemParamFlowRuleStore extends InMemoryRuleRepositoryAdapter<Param
     }
 
     @Override
-    protected ParamFlowRuleEntity preProcess(ParamFlowRuleEntity entity) {
+    protected CustomParamFlowRuleEntity preProcess(CustomParamFlowRuleEntity entity) {
         if (entity != null && entity.isClusterMode()) {
             ParamFlowClusterConfig config = entity.getClusterConfig();
             if (config == null) {

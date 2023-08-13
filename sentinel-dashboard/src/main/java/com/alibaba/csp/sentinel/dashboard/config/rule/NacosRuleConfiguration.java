@@ -56,7 +56,7 @@ public class NacosRuleConfiguration {
     }
 
     @Bean
-    public DynamicRuleStore<ParamFlowRuleEntity> paramFlowRuleDynamicRuleStore(ConfigService configService) {
+    public DynamicRuleStore<CustomParamFlowRuleEntity> paramFlowRuleDynamicRuleStore(ConfigService configService) {
         return new NacosDynamicRuleStore<>(
                 RuleType.PARAM_FLOW, nacosRuleStoreProperties, configService);
     }
@@ -67,7 +67,7 @@ public class NacosRuleConfiguration {
     }
 
     @Bean
-    public DynamicRuleStore<AuthorityRuleEntity> authorityRuleDynamicRuleStore(ConfigService configService) {
+    public DynamicRuleStore<CustomAuthorityRuleEntity> authorityRuleDynamicRuleStore(ConfigService configService) {
         return new NacosDynamicRuleStore<>(RuleType.AUTHORITY, nacosRuleStoreProperties, configService);
     }
 

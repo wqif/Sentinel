@@ -36,6 +36,7 @@ import com.alibaba.csp.sentinel.config.SentinelConfig;
 import com.alibaba.csp.sentinel.command.vo.NodeVo;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.ApiDefinitionEntity;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.GatewayFlowRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.*;
 import com.alibaba.csp.sentinel.dashboard.util.AsyncUtils;
 import com.alibaba.csp.sentinel.slots.block.Rule;
 import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRule;
@@ -47,12 +48,6 @@ import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.SentinelVersion;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.AuthorityRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.DegradeRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.ParamFlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.RuleEntity;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.SystemRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.discovery.AppManagement;
 import com.alibaba.csp.sentinel.dashboard.domain.cluster.ClusterClientInfoVO;
 import com.alibaba.csp.sentinel.dashboard.domain.cluster.state.ClusterServerStateVO;
@@ -505,14 +500,14 @@ public class SentinelApiClient {
      * @return all retrieved parameter flow rules
      * @since 0.2.1
      */
-    public CompletableFuture<List<ParamFlowRuleEntity>> fetchParamFlowRulesOfMachine(String app, String ip, int port) {
+    public CompletableFuture<List<CustomParamFlowRuleEntity>> fetchParamFlowRulesOfMachine(String app, String ip, int port) {
         try {
             AssertUtil.notEmpty(app, "Bad app name");
             AssertUtil.notEmpty(ip, "Bad machine IP");
             AssertUtil.isTrue(port > 0, "Bad machine port");
             return fetchItemsAsync(ip, port, GET_PARAM_RULE_PATH, null, ParamFlowRule.class)
                 .thenApply(rules -> rules.stream()
-                    .map(e -> ParamFlowRuleEntity.fromParamFlowRule(app, ip, port, e))
+                    .map(e -> CustomParamFlowRuleEntity.fromParamFlowRule(app, ip, port, e))
                     .collect(Collectors.toList())
                 );
         } catch (Exception e) {
@@ -530,7 +525,7 @@ public class SentinelApiClient {
      * @return all retrieved authority rules
      * @since 0.2.1
      */
-    public List<AuthorityRuleEntity> fetchAuthorityRulesOfMachine(String app, String ip, int port) {
+    public List<CustomAuthorityRuleEntity> fetchAuthorityRulesOfMachine(String app, String ip, int port) {
         AssertUtil.notEmpty(app, "Bad app name");
         AssertUtil.notEmpty(ip, "Bad machine IP");
         AssertUtil.isTrue(port > 0, "Bad machine port");
@@ -538,7 +533,7 @@ public class SentinelApiClient {
         params.put("type", AUTHORITY_TYPE);
         List<AuthorityRule> rules = fetchRules(ip, port, AUTHORITY_TYPE, AuthorityRule.class);
         return Optional.ofNullable(rules).map(r -> r.stream()
-                    .map(e -> AuthorityRuleEntity.fromAuthorityRule(app, ip, port, e))
+                    .map(e -> CustomAuthorityRuleEntity.fromAuthorityRule(app, ip, port, e))
                     .collect(Collectors.toList())
                 ).orElse(null);
     }
@@ -589,11 +584,11 @@ public class SentinelApiClient {
         return setRules(app, ip, port, SYSTEM_RULE_TYPE, rules);
     }
 
-    public boolean setAuthorityRuleOfMachine(String app, String ip, int port, List<AuthorityRuleEntity> rules) {
+    public boolean setAuthorityRuleOfMachine(String app, String ip, int port, List<CustomAuthorityRuleEntity> rules) {
         return setRules(app, ip, port, AUTHORITY_TYPE, rules);
     }
 
-    public CompletableFuture<Void> setParamFlowRuleOfMachine(String app, String ip, int port, List<ParamFlowRuleEntity> rules) {
+    public CompletableFuture<Void> setParamFlowRuleOfMachine(String app, String ip, int port, List<CustomParamFlowRuleEntity> rules) {
         if (rules == null) {
             return CompletableFuture.completedFuture(null);
         }
@@ -602,7 +597,7 @@ public class SentinelApiClient {
         }
         try {
             String data = JSON.toJSONString(
-                rules.stream().map(ParamFlowRuleEntity::getRule).collect(Collectors.toList())
+                rules.stream().map(CustomParamFlowRuleEntity::toRule).collect(Collectors.toList())
             );
             Map<String, String> params = new HashMap<>(1);
             params.put("data", data);

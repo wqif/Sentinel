@@ -15,33 +15,26 @@
  */
 package com.alibaba.csp.sentinel.dashboard.controller;
 
-import java.util.Date;
-import java.util.List;
-
 import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
+import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
 import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.AuthorityRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.CustomAuthorityRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.discovery.AppManagement;
 import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
-import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
-import com.alibaba.csp.sentinel.slots.block.RuleConstant;
-import com.alibaba.csp.sentinel.util.StringUtil;
-
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.AuthorityRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.domain.Result;
 import com.alibaba.csp.sentinel.dashboard.repository.rule.RuleRepository;
-
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Eric Zhao
@@ -56,7 +49,7 @@ public class AuthorityRuleController {
     @Autowired
     private SentinelApiClient sentinelApiClient;
     @Autowired
-    private RuleRepository<AuthorityRuleEntity, Long> repository;
+    private RuleRepository<CustomAuthorityRuleEntity, Long> repository;
     @Autowired
     private AppManagement appManagement;
 
@@ -78,9 +71,12 @@ public class AuthorityRuleController {
             return Result.ofFail(-1, "given ip does not belong to given app");
         }
         try {
-            List<AuthorityRuleEntity> rules = sentinelApiClient.fetchAuthorityRulesOfMachine(app, ip, port);
+            List<CustomAuthorityRuleEntity> rules = sentinelApiClient.fetchAuthorityRulesOfMachine(app, ip, port);
             rules = repository.saveAll(rules);
-            return Result.ofSuccess(rules);
+            List<AuthorityRuleEntity> list = rules.stream()
+                    .map(CustomAuthorityRuleEntity::toAuthorityRuleEntity)
+                    .collect(Collectors.toList());
+            return Result.ofSuccess(list);
         } catch (Throwable throwable) {
             logger.error("Error when querying authority rules", throwable);
             return Result.ofFail(-1, throwable.getMessage());
@@ -110,7 +106,7 @@ public class AuthorityRuleController {
             return Result.ofFail(-1, "limitApp should be valid");
         }
         if (entity.getStrategy() != RuleConstant.AUTHORITY_WHITE
-            && entity.getStrategy() != RuleConstant.AUTHORITY_BLACK) {
+                && entity.getStrategy() != RuleConstant.AUTHORITY_BLACK) {
             return Result.ofFail(-1, "Unknown strategy (must be blacklist or whitelist)");
         }
         return null;
@@ -128,7 +124,9 @@ public class AuthorityRuleController {
         entity.setGmtCreate(date);
         entity.setGmtModified(date);
         try {
-            entity = repository.save(entity);
+            CustomAuthorityRuleEntity customAuthorityRuleEntity = CustomAuthorityRuleEntity.fromAuthorityRuleEntity(entity);
+            customAuthorityRuleEntity = repository.save(customAuthorityRuleEntity);
+            entity = customAuthorityRuleEntity.toAuthorityRuleEntity();
         } catch (Throwable throwable) {
             logger.error("Failed to add authority rule", throwable);
             return Result.ofThrowable(-1, throwable);
@@ -146,16 +144,22 @@ public class AuthorityRuleController {
         if (id == null || id <= 0) {
             return Result.ofFail(-1, "Invalid id");
         }
+        CustomAuthorityRuleEntity oldEntity = repository.findById(id);
+        if (oldEntity == null) {
+            return Result.ofFail(-1, "Authority rule does not exist, id=" + id);
+        }
         Result<AuthorityRuleEntity> checkResult = checkEntityInternal(entity);
         if (checkResult != null) {
             return checkResult;
         }
         entity.setId(id);
         Date date = new Date();
-        entity.setGmtCreate(null);
+        entity.setGmtCreate(oldEntity.getGmtCreate());
         entity.setGmtModified(date);
         try {
-            entity = repository.save(entity);
+            CustomAuthorityRuleEntity customAuthorityRuleEntity = CustomAuthorityRuleEntity.fromAuthorityRuleEntity(entity);
+            customAuthorityRuleEntity = repository.save(customAuthorityRuleEntity);
+            entity = Objects.isNull(customAuthorityRuleEntity) ? null : customAuthorityRuleEntity.toAuthorityRuleEntity();
             if (entity == null) {
                 return Result.ofFail(-1, "Failed to save authority rule");
             }
@@ -175,10 +179,11 @@ public class AuthorityRuleController {
         if (id == null) {
             return Result.ofFail(-1, "id cannot be null");
         }
-        AuthorityRuleEntity oldEntity = repository.findById(id);
-        if (oldEntity == null) {
+        CustomAuthorityRuleEntity customAuthorityRuleEntity = repository.findById(id);
+        if (customAuthorityRuleEntity == null) {
             return Result.ofSuccess(null);
         }
+        AuthorityRuleEntity oldEntity = customAuthorityRuleEntity.toAuthorityRuleEntity();
         try {
             repository.delete(id);
         } catch (Exception e) {
@@ -191,7 +196,7 @@ public class AuthorityRuleController {
     }
 
     private boolean publishRules(String app, String ip, Integer port) {
-        List<AuthorityRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
+        List<CustomAuthorityRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
         return sentinelApiClient.setAuthorityRuleOfMachine(app, ip, port, rules);
     }
 }

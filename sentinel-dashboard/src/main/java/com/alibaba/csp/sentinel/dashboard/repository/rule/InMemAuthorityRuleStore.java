@@ -15,7 +15,7 @@
  */
 package com.alibaba.csp.sentinel.dashboard.repository.rule;
 
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.AuthorityRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.CustomAuthorityRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGenerator;
 import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGeneratorFactory;
 import com.alibaba.csp.sentinel.dashboard.idgenerator.IdGeneratorType;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * @since 0.2.1
  */
 @Component
-public class InMemAuthorityRuleStore extends InMemoryRuleRepositoryAdapter<AuthorityRuleEntity> {
+public class InMemAuthorityRuleStore extends InMemoryRuleRepositoryAdapter<CustomAuthorityRuleEntity> {
 
     private static final IdGenerator ID_GENERATOR = IdGeneratorFactory.create(IdGeneratorType.SNOWFLAKE);
 
